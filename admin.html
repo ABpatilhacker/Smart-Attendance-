@@ -1,52 +1,101 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Admin</title>
+  <meta charset="UTF-8" />
+  <title>Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <link rel="stylesheet" href="style.css">
 
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
   <script src="firebase.js"></script>
 </head>
 <body>
 
-<div class="sidebar">
-  <h2>🧑‍💼 Admin</h2>
-  <a href="index.html">🏠 Home</a>
-  <a href="login.html">🚪 Logout</a>
-</div>
+<header class="topbar">
+  <h2>🧑‍💼 Admin Dashboard</h2>
+  <button onclick="logout()" class="btn danger">Logout</button>
+</header>
 
-<div class="main-content">
+<div class="container">
 
+  <!-- ADD TEACHER -->
   <div class="card">
     <h3>Add Teacher</h3>
-    <input id="tname" placeholder="Teacher Name">
-    <input id="temail" placeholder="Teacher Email">
-    <button class="btn btn-primary" onclick="addTeacher()">Add</button>
+
+    <input type="text" id="tname" placeholder="Teacher Name">
+    <input type="email" id="temail" placeholder="Teacher Email">
+    <input type="password" id="tpassword" placeholder="Password">
+
+    <button onclick="addTeacher()" class="btn primary">
+      ➕ Add Teacher
+    </button>
   </div>
 
+  <!-- TEACHERS LIST -->
   <div class="card">
-    <h3>Teachers</h3>
-    <div id="teachers"></div>
+    <h3>All Teachers</h3>
+    <ul id="teacherList"></ul>
   </div>
 
 </div>
 
 <script>
-function addTeacher() {
-  database.ref("teachers").push({
-    name: tname.value,
-    email: temail.value
-  });
+/* 🔐 ROLE PROTECTION */
+if (localStorage.getItem("role") !== "admin") {
+  alert("Access denied");
+  window.location.href = "index.html";
 }
 
-database.ref("teachers").on("value", snap => {
-  teachers.innerHTML = "";
-  snap.forEach(t => {
-    teachers.innerHTML += `
-      <div class="list-item">
-        ${t.val().name} (${t.val().email})
-      </div>`;
+/* 🚪 LOGOUT */
+function logout() {
+  firebase.auth().signOut();
+  localStorage.clear();
+  window.location.href = "index.html";
+}
+
+/* ➕ ADD TEACHER */
+function addTeacher() {
+  const name = document.getElementById("tname").value;
+  const email = document.getElementById("temail").value;
+  const password = document.getElementById("tpassword").value;
+
+  if (!name || !email || !password) {
+    alert("Fill all fields");
+    return;
+  }
+
+  firebase.auth().createUserWithEmailAndPassword(email, password)
+    .then((cred) => {
+      const uid = cred.user.uid;
+
+      firebase.database().ref("teachers/" + uid).set({
+        name: name,
+        email: email,
+        role: "teacher"
+      });
+
+      alert("Teacher added successfully");
+      document.getElementById("tname").value = "";
+      document.getElementById("temail").value = "";
+      document.getElementById("tpassword").value = "";
+    })
+    .catch(err => alert(err.message));
+}
+
+/* 📋 LOAD TEACHERS */
+firebase.database().ref("teachers").on("value", snap => {
+  const list = document.getElementById("teacherList");
+  list.innerHTML = "";
+
+  snap.forEach(child => {
+    const t = child.val();
+    const li = document.createElement("li");
+    li.textContent = `${t.name} (${t.email})`;
+    list.appendChild(li);
   });
 });
 </script>
