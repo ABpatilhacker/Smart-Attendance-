@@ -1,4 +1,3 @@
-// Paste your Firebase config here
 const firebaseConfig = {
   apiKey: "AIzaSyB3ytMC77uaEwdqmXgr1t-PN0z3qV_Dxi8",
   authDomain: "smart-attendance-system-17e89.firebaseapp.com",
@@ -10,5 +9,6 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+
 const auth = firebase.auth();
 const database = firebase.database();
