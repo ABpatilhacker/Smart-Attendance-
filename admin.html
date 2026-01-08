@@ -1,102 +1,56 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Dashboard</title>
-<link rel="stylesheet" href="./style.css">
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="style.css">
 
-<!-- Firebase Libraries -->
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-<script src="./firebase.js"></script>
-
-<style>
-body { font-family: Arial, sans-serif; background:#f4f4f9; margin:0; padding:0; }
-header { background:#4CAF50; color:white; padding:15px; display:flex; justify-content:space-between; align-items:center; }
-header h1 { margin:0; font-size:1.5rem; }
-.btn { padding:6px 12px; margin:2px; border:none; cursor:pointer; border-radius:4px; }
-.logout { background:#F44336; color:white; }
-.dashboard-container { padding:15px; }
-.teacher-card { background:white; padding:10px; margin:10px 0; border-radius:6px; box-shadow:0 2px 5px rgba(0,0,0,0.1);}
-.teacher-card h3 { margin:0 0 5px 0; }
-.teacher-card ul { margin:0; padding-left:20px; }
-.teacher-card button { background:#2196F3; color:white; }
-.add-teacher-form { background:white; padding:10px; margin:10px 0; border-radius:6px; box-shadow:0 2px 5px rgba(0,0,0,0.1);}
-.add-teacher-form input { padding:5px; margin:5px; }
-</style>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <script src="firebase.js"></script>
 </head>
 <body>
 
-<header>
+<div class="navbar">
   <h1>🧑‍💼 Admin Dashboard</h1>
-  <button class="btn logout" onclick="signOutUser()">Logout</button>
-</header>
+</div>
 
-<div class="dashboard-container">
+<div class="container">
 
-  <div class="add-teacher-form">
-    <h2>Add New Teacher</h2>
-    <input type="text" id="teacherName" placeholder="Teacher Name">
-    <input type="email" id="teacherEmail" placeholder="Teacher Email">
-    <input type="password" id="teacherPass" placeholder="Password">
-    <button class="btn" onclick="addTeacher()">Add Teacher</button>
+  <div class="card">
+    <h3>Add Teacher</h3>
+    <input id="tname" placeholder="Teacher Name">
+    <input id="temail" placeholder="Teacher Email">
+    <button class="btn btn-primary" onclick="addTeacher()">Add</button>
   </div>
 
-  <h2>All Teachers</h2>
-  <div id="teachers-list"></div>
+  <div class="card">
+    <h3>Teachers List</h3>
+    <div id="teachers"></div>
+  </div>
+
 </div>
 
 <script>
-// Check if admin is logged in
-function checkAuth() {
-  firebase.auth().onAuthStateChanged(user => {
-    if(!user) window.location = "login.html";
+function addTeacher() {
+  const name = tname.value;
+  const email = temail.value;
+
+  database.ref("teachers").push({
+    name, email
   });
 }
 
-// Sign out
-function signOutUser() {
-  firebase.auth().signOut().then(() => window.location="login.html");
-}
-
-// Add teacher dynamically
-function addTeacher() {
-  const name = document.getElementById("teacherName").value;
-  const email = document.getElementById("teacherEmail").value;
-  const pass = document.getElementById("teacherPass").value;
-
-  if(!name || !email || !pass){ alert("Fill all fields"); return; }
-
-  // Create teacher in Firebase Auth
-  firebase.auth().createUserWithEmailAndPassword(email, pass)
-  .then(cred => {
-    const uid = cred.user.uid;
-    // Add teacher info to database
-    firebase.database().ref(`teachers/${uid}`).set({ name, email, classes:{} });
-    alert("Teacher added successfully!");
-    document.getElementById("teacherName").value = "";
-    document.getElementById("teacherEmail").value = "";
-    document.getElementById("teacherPass").value = "";
-  })
-  .catch(err => alert(err.message));
-}
-
-// Load all teachers
-const teachersList = document.getElementById("teachers-list");
-firebase.database().ref("teachers").on("value", snapshot => {
-  teachersList.innerHTML = "";
-  snapshot.forEach(teacherSnap => {
-    const teacher = teacherSnap.val();
-    const teacherCard = document.createElement("div");
-    teacherCard.className = "teacher-card";
-    teacherCard.innerHTML = `<h3>${teacher.name || "No Name"} (${teacher.email || "No Email"})</h3>`;
-    teachersList.appendChild(teacherCard);
+database.ref("teachers").on("value", snap => {
+  teachers.innerHTML = "";
+  snap.forEach(t => {
+    teachers.innerHTML += `
+      <div class="list-item">
+        <span>${t.val().name}</span>
+        <button class="btn btn-warning">View</button>
+      </div>
+    `;
   });
 });
-
-checkAuth();
 </script>
 
 </body>
