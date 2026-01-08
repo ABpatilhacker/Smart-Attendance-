@@ -1,25 +1,48 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Smart Attendance</title>
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="navbar">
-  <h1>📚 Smart Attendance System</h1>
+<div class="sidebar">
+  <h2>📘 Smart Attendance</h2>
+  <a href="index.html">🏠 Home</a>
+  <a href="login.html">🔐 Login</a>
 </div>
 
-<div class="container">
-  <div class="card" style="text-align:center;">
-    <h2>Welcome</h2>
-    <p>Select your role to continue</p><br>
+<div class="main-content">
 
-    <button class="btn btn-primary" onclick="location.href='login.html'">
-      🔐 Login
+  <div class="card" style="text-align:center;">
+    <h1>📚 Smart Attendance System</h1>
+    <p>Select your role</p>
+    <br>
+
+    <button class="btn btn-primary" onclick="selectRole('admin')">
+      👨‍💼 Admin
+    </button>
+
+    <button class="btn btn-present" onclick="selectRole('teacher')">
+      👨‍🏫 Teacher
+    </button>
+
+    <button class="btn btn-absent" onclick="selectRole('student')">
+      🎓 Student
     </button>
   </div>
+
 </div>
+
+<script>
+function selectRole(role) {
+  localStorage.setItem("role", role);
+  window.location.href = "login.html";
+}
+</script>
 
 </body>
 </html>
