@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Admin Dashboard</title>
+  <title>Admin</title>
   <link rel="stylesheet" href="style.css">
 
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -10,11 +10,13 @@
 </head>
 <body>
 
-<div class="navbar">
-  <h1>🧑‍💼 Admin Dashboard</h1>
+<div class="sidebar">
+  <h2>🧑‍💼 Admin</h2>
+  <a href="index.html">🏠 Home</a>
+  <a href="login.html">🚪 Logout</a>
 </div>
 
-<div class="container">
+<div class="main-content">
 
   <div class="card">
     <h3>Add Teacher</h3>
@@ -24,7 +26,7 @@
   </div>
 
   <div class="card">
-    <h3>Teachers List</h3>
+    <h3>Teachers</h3>
     <div id="teachers"></div>
   </div>
 
@@ -32,11 +34,9 @@
 
 <script>
 function addTeacher() {
-  const name = tname.value;
-  const email = temail.value;
-
   database.ref("teachers").push({
-    name, email
+    name: tname.value,
+    email: temail.value
   });
 }
 
@@ -45,10 +45,8 @@ database.ref("teachers").on("value", snap => {
   snap.forEach(t => {
     teachers.innerHTML += `
       <div class="list-item">
-        <span>${t.val().name}</span>
-        <button class="btn btn-warning">View</button>
-      </div>
-    `;
+        ${t.val().name} (${t.val().email})
+      </div>`;
   });
 });
 </script>
