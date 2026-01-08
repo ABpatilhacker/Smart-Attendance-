@@ -1,89 +1,76 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Teacher Dashboard</title>
+  <title>Teacher</title>
   <link rel="stylesheet" href="style.css">
 
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
   <script src="firebase.js"></script>
 </head>
 <body>
 
-<div class="navbar">
-  <h1>👨‍🏫 Teacher Dashboard</h1>
+<div class="sidebar">
+  <h2>👨‍🏫 Teacher</h2>
+  <a href="index.html">🏠 Home</a>
+  <a href="login.html">🚪 Logout</a>
 </div>
 
-<div class="container">
+<div class="main-content">
 
-  <!-- Add Class -->
   <div class="card">
     <h3>Create Class</h3>
     <input id="className" placeholder="Class Name">
-    <button class="btn btn-primary" onclick="addClass()">Add Class</button>
+    <button class="btn btn-primary" onclick="createClass()">Create</button>
   </div>
 
-  <!-- Add Student -->
   <div class="card">
     <h3>Add Student</h3>
-    <input id="studentName" placeholder="Student Name">
-    <input id="rollNo" placeholder="Roll Number">
-    <button class="btn btn-success" onclick="addStudent()">Add Student</button>
+    <input id="roll" placeholder="Roll No">
+    <input id="sname" placeholder="Student Name">
+    <button class="btn btn-primary" onclick="addStudent()">Add</button>
   </div>
 
-  <!-- Attendance -->
   <div class="card">
-    <h3>Take Attendance</h3>
-    <div id="studentList"></div>
+    <h3>Attendance</h3>
+    <div id="students"></div>
   </div>
 
 </div>
 
 <script>
-let teacherId;
 let currentClass = "";
 
-firebase.auth().onAuthStateChanged(user => {
-  if (!user) location.href = "login.html";
-  teacherId = user.uid;
-});
-
-function addClass() {
+function createClass() {
   currentClass = className.value;
-  database.ref(`teachers/${teacherId}/classes/${currentClass}`).set({
-    created: true
-  });
-  alert("Class Added");
+  alert("Class Selected: " + currentClass);
 }
 
 function addStudent() {
-  database.ref(`teachers/${teacherId}/classes/${currentClass}/students/${rollNo.value}`)
-    .set(studentName.value);
+  database.ref(`classes/${currentClass}/students/${roll.value}`)
+    .set(sname.value);
   loadStudents();
 }
 
 function loadStudents() {
-  studentList.innerHTML = "";
-  database.ref(`teachers/${teacherId}/classes/${currentClass}/students`)
-    .once("value", snap => {
-      snap.forEach(s => {
-        studentList.innerHTML += `
-          <div class="list-item">
-            ${s.key} - ${s.val()}
-            <div>
-              <button class="btn btn-success" onclick="mark('${s.key}','present')">P</button>
-              <button class="btn btn-danger" onclick="mark('${s.key}','absent')">A</button>
-            </div>
+  students.innerHTML = "";
+  database.ref(`classes/${currentClass}/students`).once("value", snap => {
+    snap.forEach(s => {
+      students.innerHTML += `
+        <div class="list-item">
+          ${s.key} - ${s.val()}
+          <div>
+            <button class="btn btn-present" onclick="mark('${s.key}','P')">P</button>
+            <button class="btn btn-absent" onclick="mark('${s.key}','A')">A</button>
           </div>
-        `;
-      });
+        </div>`;
     });
+  });
 }
 
 function mark(roll, status) {
   const date = new Date().toISOString().split("T")[0];
-  database.ref(`teachers/${teacherId}/classes/${currentClass}/attendance/${date}/${roll}`)
+  database.ref(`classes/${currentClass}/attendance/${date}/${roll}`)
     .set(status);
 }
 </script>
