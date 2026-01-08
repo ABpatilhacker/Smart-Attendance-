@@ -1,37 +1,108 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Student</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Dashboard</title>
 
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-  <script src="firebase.js"></script>
+<link rel="stylesheet" href="style.css">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+<script src="firebase.js"></script>
 </head>
+
 <body>
 
-<div class="sidebar">
-  <h2>🎓 Student</h2>
-  <a href="index.html">🏠 Home</a>
-  <a href="login.html">🚪 Logout</a>
+<div class="topbar">
+  <h2>👨‍🎓 Student Dashboard</h2>
+  <button class="btn danger" onclick="logout()">Logout</button>
 </div>
 
-<div class="main-content">
+<div class="container">
+
   <div class="card">
-    <h3>Attendance Records</h3>
-    <div id="records"></div>
+    <h3>Your Classes Attendance</h3>
+    <ul id="classesList"></ul>
   </div>
+
+  <div class="card" id="attendanceCard" style="display:none;">
+    <h3 id="classTitle">Attendance</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="attendanceTable"></tbody>
+    </table>
+  </div>
+
 </div>
 
 <script>
-database.ref("classes").on("value", snap => {
-  records.innerHTML = "";
-  snap.forEach(c => {
-    c.child("attendance").forEach(d => {
-      records.innerHTML += `<p>${c.key} - ${d.key}</p>`;
+const auth = firebase.auth();
+const db = firebase.database();
+let studentId = "";
+
+/* ===== AUTH CHECK ===== */
+auth.onAuthStateChanged(user => {
+  if(!user) {
+    window.location.href = "login.html";
+  } else {
+    studentId = user.uid;
+    loadClasses();
+  }
+});
+
+/* ===== LOAD CLASSES ===== */
+function loadClasses() {
+  classesList.innerHTML = "";
+  // Loop through all teachers and classes to find student
+  db.ref("teachers").once("value", snap => {
+    snap.forEach(teacherSnap => {
+      const teacher = teacherSnap.val();
+      if(!teacher.classes) return;
+      Object.keys(teacher.classes).forEach(clsName => {
+        const students = teacher.classes[clsName].students;
+        if(students && students[studentId]) {
+          const li = document.createElement("li");
+          li.innerHTML = `<span>${clsName}</span>
+                          <button class="btn primary" onclick="viewAttendance('${teacherSnap.key}','${clsName}')">View Attendance</button>`;
+          classesList.appendChild(li);
+        }
+      });
     });
   });
-});
+}
+
+/* ===== VIEW ATTENDANCE ===== */
+function viewAttendance(teacherId, className) {
+  attendanceCard.style.display = "block";
+  classTitle.textContent = `Attendance - ${className}`;
+  attendanceTable.innerHTML = "";
+
+  db.ref(`teachers/${teacherId}/classes/${className}/attendance`).once("value", snap => {
+    if(!snap.exists()) {
+      attendanceTable.innerHTML = `<tr><td colspan="2">No attendance recorded yet.</td></tr>`;
+      return;
+    }
+    snap.forEach(dateSnap => {
+      const status = dateSnap.child(studentId).val() || "Absent";
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${dateSnap.key}</td><td>${status}</td>`;
+      attendanceTable.appendChild(tr);
+    });
+  });
+}
+
+/* ===== LOGOUT ===== */
+function logout() {
+  auth.signOut();
+}
 </script>
 
 </body>
