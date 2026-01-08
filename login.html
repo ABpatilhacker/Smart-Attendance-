@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login - Smart Attendance</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+<script src="firebase.js"></script>
+</head>
+<body>
+<div style="text-align:center;margin-top:50px;">
+  <h1>Login</h1>
+  <input type="email" id="email" placeholder="Email"><br>
+  <input type="password" id="pass" placeholder="Password"><br>
+  <button class="btn" onclick="login()">Login</button>
+</div>
+
+<script>
+function login() {
+  const email = document.getElementById("email").value;
+  const pass = document.getElementById("pass").value;
+  auth.signInWithEmailAndPassword(email, pass)
+  .then(cred => {
+    const uid = cred.user.uid;
+    // Check role
+    database.ref("admins/"+uid).once("value").then(adminSnap=>{
+      if(adminSnap.exists()) window.location="admin.html";
+      else database.ref("teachers/"+uid).once("value").then(teacherSnap=>{
+        if(teacherSnap.exists()) window.location="teacher.html";
+        else database.ref("students/"+uid).once("value").then(studentSnap=>{
+          if(studentSnap.exists()) window.location="student.html";
+          else alert("User not found in database");
+        });
+      });
+    });
+  })
+  .catch(err => alert(err.message));
+}
+</script>
+</body>
+</html>
